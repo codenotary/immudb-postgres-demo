@@ -1,0 +1,75 @@
+# docker-compose.yml
+
+version: '3'
+services:
+  web: 
+    container_name: web
+    image: node:11
+    command: bash -c "npm install && npm run dev"
+    volumes:
+      - ./demo:/usr/src/service
+    working_dir: /usr/src/service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      PUBLIC_HOST: $PUBLIC_HOST
+      REALTIME_URL: ws://$PUBLIC_HOST:4000/socket
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_PORT: 5432
+
+  realtime:
+    container_name: realtime
+    build: ./
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_PORT: 5432
+      PORT: 4000
+      HOSTNAME: $PUBLIC_HOST
+      SECRET_KEY_BASE: SOMETHING_SUPER_SECRET
+
+  db:
+    container_name: db
+    image: supabase/postgres
+    ports:
+      - "5432:5432"
+    volumes:
+    - ./dev/postgres/mnt:/docker-entrypoint-initdb.d/
+    command:
+    - postgres
+    - -c
+    - wal_level=logical
+    environment: 
+      POSTGRES_PASSWORD: postgres
+
+  immudb:
+    ports:
+      - '3322:3322'
+    container_name: immudb
+    environment:
+      - IMMUDB_ADDRESS=0.0.0.0
+      - IMMUDB_AUTH=false
+    image: 'codenotary/immudb:latest'
+
+  immugw:
+    ports:
+      - '3323:3323'
+    container_name: immugw
+    depends_on:
+      - immudb
+    environment:
+      - IMMUGW_ADDRESS=0.0.0.0
+      - IMMUGW_IMMUDB_ADDRESS=immudb
+    image: 'codenotary/immugw:latest'
+
