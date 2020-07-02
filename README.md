@@ -18,7 +18,7 @@ This demo shows a simple workflow of user accounts and bank accounts. Every inse
 If you just want to start it up and see it in action: 
 
 1. clone this repo `git clone https://github.com/codenotary/immudb-postgres-demo.git`
-2. copy `.env.example` to `.env` and configure the ip or host name the system will be accessed (i. e. localhost, myserver.somewhere.local)
+2. copy `env.example` to `.env` and configure the ip or host name the system will be accessed (i. e. localhost, myserver.somewhere.local)
 3. Run `docker-compose up`
 4. Visit `http://<configured hostname>:3000` (be patient, node_modules will need to install)
 
