@@ -1,6 +1,6 @@
 # immudb PostgreSQL demo
 
-Listens to changes in a PostgreSQL Database and broadcasts them into immudb.
+Listens to changes in a PostgreSQL Database and broadcasts them into immudb. immudb provides the unique software solution to store any data tamperproof including an immutable data history.
 
 **Contents**
 - [Introduction](#introduction)
