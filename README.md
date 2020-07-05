@@ -2,6 +2,8 @@
 
 Listens to changes in a PostgreSQL Database and broadcasts them into immudb. immudb provides the unique software solution to store any data tamperproof including an immutable data history.
 
+<p align="center"><kbd><img src="./demo/animated.gif" alt="Demo"/></kbd></p>
+
 **Contents**
 - [Introduction](#introduction)
 - [Quick start](#quick-start)
