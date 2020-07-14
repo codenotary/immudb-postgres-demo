@@ -186,7 +186,11 @@ export default class Index extends React.Component {
                 params
             });
 
-            record = rows[0];
+            if (x.msg.table === 'users') {
+                record = rows[0];
+            } else {
+                record = rows.find((row) => row.iban = x.msg.record.iban) || rows[0];
+            }
         } catch (error) {
             console.log('error', error);
         }

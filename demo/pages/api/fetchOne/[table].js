@@ -14,6 +14,9 @@ export default async (req, res) => {
     query: { table },
   } = req
 
-  const q = await pool.query(`SELECT * FROM ${table} WHERE id=$1`, [req.query.id]);
+  const q = await pool.query(`SELECT * FROM ${table} WHERE ${table === 'users' ? 'id' : 'user_id'}=$1`, [
+      table === 'users' ? req.query.id : req.query.user_id
+  ]);
+
   return res.json(JSON.stringify(q.rows))
 }
