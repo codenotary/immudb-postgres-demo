@@ -189,7 +189,7 @@ export default class Index extends React.Component {
             if (x.msg.table === 'users') {
                 record = rows[0];
             } else {
-                record = rows.find((row) => row.iban = x.msg.record.iban) || rows[0];
+                record = rows.find((row) => row.account = x.msg.record.account) || rows[0];
             }
         } catch (error) {
             console.log('error', error);
@@ -204,7 +204,7 @@ export default class Index extends React.Component {
             valueString = record.name;
         } else {
             idString = record.user_id;
-            valueString = record.iban;
+            valueString = record.account;
         }
 
         if (key.indexOf(idString) === -1 || value.indexOf(valueString) === -1) {
