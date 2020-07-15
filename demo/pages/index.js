@@ -159,31 +159,80 @@ export default class Index extends React.Component {
         return string.replace(/[^\w ]/g, '');
     }
 
-    async openModal(immudbIndex) {
+    async openModal(immudbIndex, x) {
         const itemResponse = await axios.get(`http://${PUBLIC_HOST}:3323/v1/immurestproxy/item/index/${immudbIndex}`, config);
-        const key = itemResponse.data.key;
 
         const data = {
-            key,
+            key: itemResponse.data.key,
         };
 
         const safeGetResponse = await axios.post(`http://${PUBLIC_HOST}:3323/v1/immurestproxy/item/safe/get`, data, config);
-        const historyResponse = await axios.get(`http://${PUBLIC_HOST}:3323/v1/immurestproxy/history/${key}`, config);
+        const historyResponse = await axios.get(`http://${PUBLIC_HOST}:3323/v1/immurestproxy/history/${itemResponse.data.key}`, config);
+
+        const key = Buffer.from(itemResponse.data.key, 'base64').toString('utf-8');
+        const value = this.trimSpecial(Buffer.from(itemResponse.data.value, 'base64').toString('utf-8'));
+
+        let record = {};
+        try {
+            let params = {};
+
+            if (x.msg.table === 'users') {
+                params.id = x.msg.record.id;
+            } else {
+                params.user_id = x.msg.record.user_id;
+            }
+
+            let { data: rows } = await axios.get(`/api/fetchOne/${x.msg.table}`, {
+                params
+            });
+
+            if (x.msg.table === 'users') {
+                record = rows[0];
+            } else {
+                record = rows.find((row) => row.account = x.msg.record.account) || rows[0];
+            }
+        } catch (error) {
+            console.log('error', error);
+        }
+
+        let tampered = false;
+        let idString;
+        let valueString;
+
+        if (x.msg.table === 'users') {
+            idString = record.id;
+            valueString = record.name;
+        } else {
+            idString = record.user_id;
+            valueString = record.account;
+        }
+
+        if (key.indexOf(idString) === -1 || value.indexOf(valueString) === -1) {
+            tampered = true;
+        }
 
         this.setState({
             modalOpen: true,
             immudbItem: JSON.stringify({
                 ...itemResponse.data,
-                key: Buffer.from(itemResponse.data.key, 'base64').toString('utf-8'),
-                value: this.trimSpecial(Buffer.from(itemResponse.data.value, 'base64').toString('utf-8')),
+                key,
+                value,
             }, null, 2),
+
+            immudbValue: JSON.stringify({ key, value }, null, 2)
+                .replace(/"value": (".+")/, `"value": <span class="${tampered ? 'bg-danger' : 'bg-success'} p-1 rounded">$1</span>`),
+
+            postgresValue: JSON.stringify(x.msg.record, null, 2)
+                .replace(`"${valueString}"`, `<span class="${tampered ? 'bg-danger' : 'bg-success'} p-1 rounded">"${valueString}"</span>`),
+
             immudbSafeGet: JSON.stringify({
                 ...safeGetResponse.data,
-                key: Buffer.from(itemResponse.data.key, 'base64').toString('utf-8'),
-                value: this.trimSpecial(Buffer.from(itemResponse.data.value, 'base64').toString('utf-8')),
+                key,
+                value,
             }, null, 2)
                 .replace(`"verified": true`, `<span class="bg-success p-1 rounded">"verified": true</span>`)
                 .replace(`"verified": false`, `<span class="bg-danger p-1 rounded">"verified": false</span>`),
+
             immudbHistory: JSON.stringify({
                 ...historyResponse.data,
                 items: historyResponse.data.items.map((item) => ({
@@ -253,6 +302,17 @@ export default class Index extends React.Component {
                                     <code style={styles.code}>{this.state.immudbHistory}</code>
                                 </pre>
                             </div>
+                            <div className="col">
+                                <h3>Postgres/immudb verification</h3>
+                                <p>Last value immudb</p>
+                                <pre style={{ ...styles.pre }}>
+                                    <code style={styles.code} dangerouslySetInnerHTML={{ __html: this.state.immudbValue }}></code>
+                                </pre>
+                                <p>Last value postgres</p>
+                                <pre style={{ ...styles.pre }}>
+                                    <code style={styles.code} dangerouslySetInnerHTML={{ __html: this.state.postgresValue }}></code>
+                                </pre>
+                            </div>
                         </div>
                     </Modal>
 
@@ -278,7 +338,7 @@ export default class Index extends React.Component {
                                     <div className="card-body p-2">
                                         <p className="mb-2">
                                             Received on {x.channel} / immutably stored by immudb:
-                                            <a style={styles.link} onClick={() => this.openModal(x.immuresponse.index)}>index {x.immuresponse.index}</a>
+                                            <a style={styles.link} onClick={() => this.openModal(x.immuresponse.index, x)}>index {x.immuresponse.index}</a>
                                         </p>
                                         <pre style={styles.pre} className="mb-0">
                                             <code style={styles.code}>{JSON.stringify(x.msg, null, 2)}</code>

@@ -1,6 +1,7 @@
 node_modules
 .examples
 .env
+.idea
 # The directory Mix will write compiled artifacts to.
 /_build/
 
